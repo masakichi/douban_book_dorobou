@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         豆瓣読書泥棒
 // @namespace    https://gimo.me/
-// @version      0.1.0
+// @version      0.2.0
 // @description  从日本读书网站摘取书评显示在豆瓣读书条目页面
 // @author       Yuanji
 // @match        https://book.douban.com/subject/*
@@ -82,7 +82,7 @@ function ISBN13ToISBN10(isbn13) {
     for (const [idx, char] of Array.from(commonChars).entries()) {
         sum += (10 - idx) * parseInt(char)
     }
-    let checkDigest = 11 - (sum % 11)
+    let checkDigest = (11 - (sum % 11)) % 11
     checkDigest = checkDigest !== 10 ? checkDigest.toString() : 'X'
     return commonChars + checkDigest
 }
