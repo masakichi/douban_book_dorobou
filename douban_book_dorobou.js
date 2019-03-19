@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         豆瓣読書泥棒
 // @namespace    https://gimo.me/
-// @version      0.2.0
+// @version      0.3.0
 // @description  从日本读书网站摘取书评显示在豆瓣读书条目页面
 // @author       Yuanji
 // @match        https://book.douban.com/subject/*
@@ -27,6 +27,28 @@ function buildCommentItem(props) {
     </div>
 </li>
 `
+}
+
+function buildRatingInfo(props, isbn10) {
+    starValue = Math.round(props.rating) * 5
+    url = `https://booklog.jp/item/1/${isbn10}`
+    return `
+    <div class="rating_wrap clearbox" rel="v:rating">
+        <div class="rating_logo">ブクログのレビュー</div>
+        <div class="rating_self clearfix" typeof="v:Rating">
+            <strong class="ll rating_num " property="v:average"> ${props.rating} </strong>
+            <span property="v:best" content="10.0"></span>
+            <div class="rating_right ">
+                <div class="ll bigstar${starValue}"></div>
+                <div class="rating_sum">
+                    <span class="">
+                        <a href="${url}" class="rating_people">レビュー<span property="v:votes">${props.count}</span>件</a>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    `
 }
 
 function getISBN() {
@@ -76,6 +98,16 @@ function parseBooklogReview(el) {
     }
 }
 
+function parseBooklogRating(doc) {
+    ratingDiv = doc.querySelector('div[class="rating-value"]')
+    rating = ((+ratingDiv.innerText.split('\n')[0])*2).toFixed(1)
+    count = +doc.querySelector('span[itemprop="reviewCount"]').innerText
+    return {
+        rating,
+        count
+    }
+}
+
 function ISBN13ToISBN10(isbn13) {
     const commonChars = isbn13.slice(3, -1)
     let sum = 0
@@ -99,6 +131,7 @@ function ISBN13ToISBN10(isbn13) {
     const commentListWrapper = document.getElementById('comment-list-wrapper')
     commentListWrapper.insertAdjacentHTML('beforeend', `<div id="comments" class="comment-list booklog noshow"><ul id="booklog-review-list"></ul></div>`)
     const booklogReviewList = document.getElementById('booklog-review-list')
+    const RatingInfoList = document.getElementById('interest_sectl')
     const isbn10 = ISBN13ToISBN10(isbn)
     const booklogURL = `https://booklog.jp/item/1/${isbn10}?perpage=10&rating=0&is_read_more=2&sort=1`
     console.log(booklogURL)
@@ -121,5 +154,7 @@ function ISBN13ToISBN10(isbn13) {
             review.innerHTML = buildCommentItem(props)
             booklogReviewList.appendChild(review)
         }
+        console.log(doc.location)
+        RatingInfoList.insertAdjacentHTML('beforeend', buildRatingInfo(parseBooklogRating(doc), isbn10))
     })
 })();
